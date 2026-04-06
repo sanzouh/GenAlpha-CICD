@@ -1,0 +1,40 @@
+GÉNÉRATION N — 80 portefeuilles existants
+
+─── ÉTAPE 1 : Évaluation ───
+On calcule le Sharpe de chaque portefeuille (Calcul fonction fitness)
+On trie les 80 du meilleur au moins bon
+
+─── ÉTAPE 2 : Sélection (25%) ───
+Top 20 survivent → ce sont les "élites"
+Les 60 autres sont éliminés
+
+─── ÉTAPE 3 : Élitisme ───
+Les 20 élites sont copiés directement
+dans la nouvelle population → déjà 20/80
+
+─── ÉTAPE 4 : Reproduction (jusqu'à 80) ───
+On répète 60 fois :
+
+  Tirage aléatoire → Parent A (parmi les 20 élites)
+  Tirage aléatoire → Parent B (parmi les 20 élites)
+
+  Dé à 75% → croisement uniforme A+B → Enfant
+  Dé à 25% → copie de A → Enfant
+
+  Dé à 8% par poids → mutation éventuelle
+  Renormalisation → somme = 1
+  Évaluation → calcul du Sharpe
+
+  Enfant ajouté → 21/80, 22/80 ... 80/80
+
+─── GÉNÉRATION N+1 ───
+80 nouveaux portefeuilles prêts
+20 élites intacts + 60 enfants améliorés
+
+Fitness Convergence (LineChart): 
+  montre l’amélioration du Sharpe moyen/meilleur génération après génération.
+Pareto Front (ScatterChart):
+   montre le compromis rendement/risque : points gris = population, bleu = non-dominés.
+Le rôle du Pareto est critique: 
+  il montre visuellement quelles solutions “dominées” (moins bonnes sur les deux critères) existent, 
+  et où se situe la frontière optimale. C’est la base d’une décision “choisir le bon couple rendement/risque”.
