@@ -13,7 +13,6 @@ interface ParetoTableProps {
 function AllocationPill({
 	ticker,
 	weight,
-	color,
 }: {
 	ticker: string;
 	weight: number;
