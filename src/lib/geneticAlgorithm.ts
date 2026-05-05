@@ -49,15 +49,29 @@ function normalize(weights: number[]): number[] {
 	return weights.map((w) => w / sum);
 }
 
+// Plafonne chaque poids à maxW puis renormalise (itératif pour garantir la contrainte)
+function enforceMaxWeight(weights: number[], maxW = 0.40): number[] {
+	let w = [...weights];
+	for (let iter = 0; iter < 20; iter++) {
+		const capped = w.map((x) => Math.min(x, maxW));
+		const sum = capped.reduce((s, x) => s + x, 0);
+		const next = capped.map((x) => x / sum);
+		if (next.every((x) => x <= maxW + 1e-9)) return next;
+		w = next;
+	}
+	return w;
+}
+
 export function randomPortfolio(): number[] {
-	const weights = ASSETS.map(() => Math.random() + 0.02);
+	const weights = ASSETS.map(() => Math.random());
 	return normalize(weights);
 }
 
 export function evaluatePortfolio(
-	weights: number[],
+	rawWeights: number[],
 	mode: "markowitz" | "linear" = "markowitz",
 ): Portfolio {
+	const weights = enforceMaxWeight(rawWeights);
 	let expectedReturn = 0;
 	let volatility = 0;
 
@@ -81,10 +95,10 @@ export function evaluatePortfolio(
 					CORRELATION[i][j];
 			});
 		});
-		volatility = Math.sqrt(varianceSum);
+		volatility = Math.sqrt(Math.max(0, varianceSum));
 	}
 
-	const sharpe = (expectedReturn - RISK_FREE_RATE) / volatility;
+	const sharpe = volatility > 0 ? (expectedReturn - RISK_FREE_RATE) / volatility : 0;
 	return { weights, expectedReturn, volatility, sharpe };
 }
 
@@ -271,9 +285,11 @@ export async function* runGeneticAlgorithm(
 
 		population = combined.slice(0, populationSize);
 
-		const paretoFront = population.filter((p) => (p as RankedPortfolio).rank === 0);
-		const currentBest = [...paretoFront].sort((a, b) => b.sharpe - a.sharpe)[0];
+		const fullFront = population.filter((p) => (p as RankedPortfolio).rank === 0);
+		const currentBest = [...fullFront].sort((a, b) => b.sharpe - a.sharpe)[0];
 		if (!bestEver || currentBest.sharpe > bestEver.sharpe) bestEver = currentBest;
+
+		const paretoFront = fullFront;
 
 		yield {
 			generation: gen + 1,

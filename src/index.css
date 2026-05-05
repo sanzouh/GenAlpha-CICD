@@ -57,6 +57,14 @@
 	--color-googl: #ba7517;
 	--color-amzn: #7f77dd;
 	--color-nvda: #d85a30;
+	--color-tbond: #6aabf7;
+	--color-tip:   #95c8d8;
+	--color-gold:  #ef9f27;
+	--color-reit:  #e67e22;
+	--color-spy:   #4ecdc4;
+	--color-eem:   #9b59b6;
+	--color-xle:   #2ecc71;
+	--color-btc:   #f7931a;
 
 	/* ── Border radius ── */
 	--radius-sm: 8px;

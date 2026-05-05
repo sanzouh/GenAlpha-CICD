@@ -2,15 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { ASSETS as DEFAULT_ASSETS } from "@/data/assets";
 import type { Asset } from "@/lib/geneticAlgorithm";
 
-const STORAGE_KEY = "genportfolio:assets";
+const STORAGE_KEY = "genportfolio:assets:v2";
 const assetEvents = new EventTarget();
 const ASSET_COLOR_POOL = [
-	"bg-aapl",
-	"bg-msft",
-	"bg-tsla",
-	"bg-googl",
-	"bg-amzn",
-	"bg-nvda",
+	"bg-aapl",  "bg-msft",  "bg-tsla",  "bg-googl",
+	"bg-amzn",  "bg-nvda",  "bg-tbond", "bg-tip",
+	"bg-gold",  "bg-reit",  "bg-spy",   "bg-eem",
+	"bg-xle",   "bg-btc",
 ];
 
 function pickAssetColor(used: Set<string>): string {

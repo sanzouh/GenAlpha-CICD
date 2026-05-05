@@ -30,10 +30,10 @@ const INITIAL_STATE: GAState = {
 };
 
 const DEFAULT_PARAMS: GAParams = {
-	populationSize: 80,
-	generations: 60,
+	populationSize: 120,
+	generations: 100,
 	crossoverRate: 75,
-	mutationRate: 3, // Réduit de 8% à 3% pour mutations plus fines
+	mutationRate: 3,
 	maxRisk: 20,
 	volatilityMode: "markowitz",
 };
