@@ -112,14 +112,14 @@ export function mutate(weights: number[], mutationRate: number, amplitude = 0.15
 	return normalize(positive);
 }
 
+// ─────────────────────────────────────────────
+//  DOMINATION (stricte, sans EPS)
+// ─────────────────────────────────────────────
 function dominates(a: Portfolio, b: Portfolio): boolean {
-	const EPS = 0.01;
-
 	return (
-		a.expectedReturn >= b.expectedReturn - EPS &&
-		a.volatility <= b.volatility + EPS &&
-		(a.expectedReturn > b.expectedReturn + EPS ||
-			a.volatility < b.volatility - EPS)
+		a.expectedReturn >= b.expectedReturn &&
+		a.volatility <= b.volatility &&
+		(a.expectedReturn > b.expectedReturn || a.volatility < b.volatility)
 	);
 }
 
@@ -127,15 +127,99 @@ export function getParetoFront(population: Portfolio[]): Portfolio[] {
 	return population.filter((p) => !population.some((q) => dominates(q, p)));
 }
 
-function tournamentSelect(
-	pool: (Portfolio & { fit: number })[],
-	k = 3,
-): Portfolio & { fit: number } {
+// ─────────────────────────────────────────────
+//  NSGA-II
+// ─────────────────────────────────────────────
+interface RankedPortfolio extends Portfolio {
+	rank: number;
+	crowding: number;
+}
+
+function nonDominatedSort(population: Portfolio[], maxRisk: number): RankedPortfolio[] {
+	const n = population.length;
+	const INFEASIBLE = n + 1;
+	const feasible = population.map((p) => p.volatility <= maxRisk);
+
+	const dominationCount = new Array<number>(n).fill(0);
+	const dominated: number[][] = Array.from({ length: n }, () => []);
+	const ranks = new Array<number>(n).fill(INFEASIBLE);
+	const crowding = new Array<number>(n).fill(0);
+
+	// Les infaisables reçoivent une crowding distance inversement proportionnelle à leur violation
+	for (let i = 0; i < n; i++) {
+		if (!feasible[i]) {
+			crowding[i] = -(population[i].volatility - maxRisk);
+			continue;
+		}
+		for (let j = 0; j < n; j++) {
+			if (i === j || !feasible[j]) continue;
+			if (dominates(population[i], population[j])) {
+				dominated[i].push(j);
+			} else if (dominates(population[j], population[i])) {
+				dominationCount[i]++;
+			}
+		}
+	}
+
+	const fronts: number[][] = [[]];
+	for (let i = 0; i < n; i++) {
+		if (feasible[i] && dominationCount[i] === 0) {
+			ranks[i] = 0;
+			fronts[0].push(i);
+		}
+	}
+
+	let f = 0;
+	while (fronts[f].length > 0) {
+		const next: number[] = [];
+		for (const i of fronts[f]) {
+			for (const j of dominated[i]) {
+				if (--dominationCount[j] === 0) {
+					ranks[j] = f + 1;
+					next.push(j);
+				}
+			}
+		}
+		f++;
+		fronts.push(next);
+	}
+
+	for (let fi = 0; fi < f; fi++) {
+		const front = fronts[fi];
+		if (front.length <= 2) {
+			for (const i of front) crowding[i] = Infinity;
+			continue;
+		}
+		for (const obj of ["expectedReturn", "volatility"] as const) {
+			const sorted = [...front].sort(
+				(a, b) => population[a][obj] - population[b][obj],
+			);
+			crowding[sorted[0]] = Infinity;
+			crowding[sorted[sorted.length - 1]] = Infinity;
+			const range =
+				population[sorted[sorted.length - 1]][obj] - population[sorted[0]][obj];
+			if (range === 0) continue;
+			for (let k = 1; k < sorted.length - 1; k++) {
+				crowding[sorted[k]] +=
+					(population[sorted[k + 1]][obj] - population[sorted[k - 1]][obj]) /
+					range;
+			}
+		}
+	}
+
+	return population.map((p, i) => ({ ...p, rank: ranks[i], crowding: crowding[i] }));
+}
+
+function nsgaTournamentSelect(pool: RankedPortfolio[], k = 2): RankedPortfolio {
 	const candidates = Array.from(
 		{ length: k },
 		() => pool[Math.floor(Math.random() * pool.length)],
 	);
-	return candidates.reduce((best, c) => (c.fit > best.fit ? c : best));
+	return candidates.reduce((best, c) => {
+		if (c.rank < best.rank) return c;
+		if (c.rank === best.rank && c.crowding > best.crowding) return c;
+		return best;
+	});
 }
 
 export async function* runGeneticAlgorithm(
@@ -154,49 +238,47 @@ export async function* runGeneticAlgorithm(
 		evaluatePortfolio(randomPortfolio(), volatilityMode),
 	);
 
+	let bestEver: Portfolio | null = null;
+
 	for (let gen = 0; gen < generations; gen++) {
 		await new Promise((r) => setTimeout(r, 16));
 
-		const evaluated = population
-			.map((p) => ({ ...p, fit: fitness(p, maxRisk) }))
-			.sort((a, b) => b.fit - a.fit);
+		// Rang + crowding sur la population courante
+		const ranked = nonDominatedSort(population, maxRisk);
 
-		// Sélection avec 3 élites
-		const sharpeElite = evaluated.slice(0, Math.floor(populationSize * 0.1));
-		const returnElite = [...evaluated]
-			.sort((a, b) => b.expectedReturn - a.expectedReturn)
-			.slice(0, Math.floor(populationSize * 0.05));
-		const riskElite = [...evaluated]
-			.sort((a, b) => a.volatility - b.volatility)
-			.slice(0, Math.floor(populationSize * 0.05));
+		// Génération des enfants (même taille que la population)
+		const offspring: Portfolio[] = [];
+		const amplitude = 0.3 * (1 - gen / generations);
 
-		const elite = [...sharpeElite, ...returnElite, ...riskElite].filter(
-			(p, i, arr) => arr.indexOf(p) === i,
-		);
-
-		const newPopulation: Portfolio[] = elite.map((e) => ({ ...e }));
-
-		while (newPopulation.length < populationSize) {
-			const parentA = tournamentSelect(evaluated);
-			const parentB = tournamentSelect(evaluated);
+		while (offspring.length < populationSize) {
+			const parentA = nsgaTournamentSelect(ranked);
+			const parentB = nsgaTournamentSelect(ranked);
 
 			let childWeights =
 				Math.random() < crossoverRate / 100
 					? crossover(parentA.weights, parentB.weights)
 					: [...parentA.weights];
 
-			const amplitude = 0.3 * (1 - gen / generations);
 			childWeights = mutate(childWeights, mutationRate, amplitude);
-			newPopulation.push(evaluatePortfolio(childWeights, volatilityMode));
+			offspring.push(evaluatePortfolio(childWeights, volatilityMode));
 		}
 
-		population = newPopulation;
-		const paretoFront = getParetoFront(population);
+		// Sélection NSGA-II : trier parents + enfants par (rank asc, crowding desc)
+		const combined = nonDominatedSort([...population, ...offspring], maxRisk);
+		combined.sort((a, b) =>
+			a.rank !== b.rank ? a.rank - b.rank : b.crowding - a.crowding,
+		);
+
+		population = combined.slice(0, populationSize);
+
+		const paretoFront = population.filter((p) => (p as RankedPortfolio).rank === 0);
+		const currentBest = [...paretoFront].sort((a, b) => b.sharpe - a.sharpe)[0];
+		if (!bestEver || currentBest.sharpe > bestEver.sharpe) bestEver = currentBest;
 
 		yield {
 			generation: gen + 1,
-			best: evaluated[0],
-			population: evaluated,
+			best: bestEver,
+			population,
 			paretoFront,
 			progress: Math.round(((gen + 1) / generations) * 100),
 		};
