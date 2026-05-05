@@ -24,7 +24,7 @@ export default function ResultsHeader({ best, paretoCount, params, onBack }: Res
 			<div className="flex flex-col gap-3">
 				<button
 					onClick={onBack}
-					className="flex items-center gap-2 text-[12px] text-gray-600 hover:text-gray-900 transition-colors w-fit"
+					className="flex items-center gap-2 text-[12px] font-medium text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/20 hover:border-white/40 px-3 py-1.5 rounded-md transition-all w-fit"
 				>
 					<ArrowLeft size={14} />
 					Back to Dashboard

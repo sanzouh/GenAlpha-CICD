@@ -61,7 +61,7 @@ export default function Results() {
 						<PortfolioDetail
 							portfolio={champion}
 							assets={assets}
-							onConfirm={() => alert("Portfolio confirmed!")}
+							profile={profile}
 						/>
 					</>
 				)}

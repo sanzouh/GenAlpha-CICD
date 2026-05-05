@@ -1,14 +1,15 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import type { Portfolio } from "@/lib/geneticAlgorithm";
 import type { Asset } from "@/lib/geneticAlgorithm";
+import ConfirmModal from "./ConfirmModal";
 
-const SP500_RETURN = 8.0; // référence marché
+const SP500_RETURN = 8.0;
 
 interface PortfolioDetailProps {
 	portfolio: Portfolio;
 	assets: Asset[];
-	onConfirm: () => void;
+	profile: string;
 }
 
 function DonutChart({
@@ -58,15 +59,9 @@ function DonutChart({
 	);
 }
 
-export default function PortfolioDetail({
-	portfolio,
-	assets,
-	onConfirm,
-}: PortfolioDetailProps) {
-	const vsMarket = useMemo(
-		() => portfolio.expectedReturn - SP500_RETURN,
-		[portfolio],
-	);
+export default function PortfolioDetail({ portfolio, assets, profile }: PortfolioDetailProps) {
+	const [showModal, setShowModal] = useState(false);
+	const vsMarket = useMemo(() => portfolio.expectedReturn - SP500_RETURN, [portfolio]);
 
 	return (
 		<div className="card flex flex-col gap-5">
@@ -160,12 +155,21 @@ export default function PortfolioDetail({
 
 			{/* Confirm */}
 			<button
-				onClick={onConfirm}
-				className="w-full py-3 rounded-lg bg-green-500 hover:bg-green-600
+				onClick={() => setShowModal(true)}
+				className="w-full py-3 rounded-lg bg-green-500 hover:bg-green-700
                    text-white font-semibold text-[14px] transition-colors duration-150"
 			>
 				Confirm Portfolio
 			</button>
+
+			{showModal && (
+				<ConfirmModal
+					portfolio={portfolio}
+					assets={assets}
+					profile={profile}
+					onClose={() => setShowModal(false)}
+				/>
+			)}
 		</div>
 	);
 }
