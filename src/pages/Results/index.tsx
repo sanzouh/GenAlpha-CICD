@@ -23,21 +23,15 @@ export default function Results() {
 	const { paretoFront, best, params } = state as ResultsState;
 
 	const [profile, setProfile] = useState<RiskProfile>("balanced");
-	const [selected, setSelected] = useState<number | null>(null);
 
-	// Calcul des percentiles de volatilité
-	const filtered = useMemo(() => {
-		const vols = paretoFront.map((p) => p.volatility).sort((a, b) => a - b);
-		const p33 = vols[Math.floor(vols.length * 0.33)];
-		const p66 = vols[Math.floor(vols.length * 0.66)];
-
-		return paretoFront
-			.filter((p) => {
-				if (profile === "conservative") return p.volatility <= p33;
-				if (profile === "aggressive") return p.volatility >= p66;
-				return p.volatility > p33 && p.volatility < p66;
-			})
-			.sort((a, b) => b.sharpe - a.sharpe); // meilleur Sharpe en premier
+	// Un seul champion par profil, sélectionné selon un critère précis
+	const champion = useMemo((): Portfolio | null => {
+		if (paretoFront.length === 0) return null;
+		if (profile === "conservative")
+			return paretoFront.reduce((b, p) => p.volatility < b.volatility ? p : b);
+		if (profile === "aggressive")
+			return paretoFront.reduce((b, p) => p.expectedReturn > b.expectedReturn ? p : b);
+		return paretoFront.reduce((b, p) => p.sharpe > b.sharpe ? p : b);
 	}, [paretoFront, profile]);
 
 	return (
@@ -52,31 +46,24 @@ export default function Results() {
 			<div className="px-8 py-6 flex flex-col gap-5">
 				<RiskToleranceTabs
 					active={profile}
-					onChange={(p) => {
-						setProfile(p);
-						setSelected(null);
-					}}
+					onChange={(p) => setProfile(p)}
 				/>
 
-				<ParetoTable
-					portfolios={filtered}
-					assets={assets}
-					selected={selected}
-					best={best}
-					onSelect={setSelected}
-				/>
-
-				{/* Portfolio Detail — prochain commit */}
-				{selected !== null && (
-					<PortfolioDetail
-						portfolio={filtered[selected]}
-						assets={assets}
-						onConfirm={() => {
-							// Pour l'instant — alert simple
-							// Plus tard : export PDF, localStorage, etc.
-							alert(`Portfolio ${selected + 1} confirmed!`);
-						}}
-					/>
+				{champion && (
+					<>
+						<ParetoTable
+							portfolios={[champion]}
+							assets={assets}
+							selected={0}
+							best={best}
+							onSelect={() => {}}
+						/>
+						<PortfolioDetail
+							portfolio={champion}
+							assets={assets}
+							onConfirm={() => alert("Portfolio confirmed!")}
+						/>
+					</>
 				)}
 				<AcademicContext />
 			</div>

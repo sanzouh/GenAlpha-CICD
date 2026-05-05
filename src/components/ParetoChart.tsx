@@ -107,11 +107,13 @@ export default memo(function ParetoChart({
 								animationDuration={0}
 							/>
 
-							{/* Front de Pareto — bleu mis en avant */}
+							{/* Front de Pareto — courbe triée par volatilité */}
 							<Scatter
-								data={paretoFront}
+								data={[...paretoFront].sort((a, b) => a.volatility - b.volatility)}
 								fill="#2e7dd1"
-								r={5}
+								r={4}
+								line={{ stroke: "#2e7dd1", strokeWidth: 1.5 }}
+								lineType="joint"
 								isAnimationActive={false}
 								animationDuration={0}
 							/>
