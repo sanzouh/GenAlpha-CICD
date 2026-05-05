@@ -9,6 +9,7 @@ interface AssetFormData {
 	name: string;
 	expectedReturn: number;
 	volatility: number;
+	marketCorr: number;
 }
 
 const Modal = ({
@@ -50,10 +51,11 @@ export default function AssetList() {
 		name: "",
 		expectedReturn: 0,
 		volatility: 0,
+		marketCorr: 0.3,
 	});
 
 	const handleAdd = () => {
-		setFormData({ ticker: "", name: "", expectedReturn: 0, volatility: 0 });
+		setFormData({ ticker: "", name: "", expectedReturn: 0, volatility: 0, marketCorr: 0.3 });
 		setShowAddModal(true);
 	};
 
@@ -63,6 +65,7 @@ export default function AssetList() {
 			name: asset.name,
 			expectedReturn: asset.expectedReturn,
 			volatility: asset.volatility,
+			marketCorr: asset.marketCorr,
 		});
 		setEditingAsset(asset);
 		setShowEditModal(true);
