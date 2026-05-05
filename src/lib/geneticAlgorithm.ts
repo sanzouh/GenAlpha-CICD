@@ -100,10 +100,10 @@ export function crossover(parentA: number[], parentB: number[]): number[] {
 	return normalize(childWeights);
 }
 
-export function mutate(weights: number[], mutationRate: number): number[] {
+export function mutate(weights: number[], mutationRate: number, amplitude = 0.15): number[] {
 	const mutated = weights.map((w) => {
 		if (Math.random() < mutationRate / 100) {
-			return w + (Math.random() - 0.5) * 0.15;
+			return w + (Math.random() - 0.5) * amplitude;
 		}
 		return w;
 	});
@@ -125,6 +125,17 @@ function dominates(a: Portfolio, b: Portfolio): boolean {
 
 export function getParetoFront(population: Portfolio[]): Portfolio[] {
 	return population.filter((p) => !population.some((q) => dominates(q, p)));
+}
+
+function tournamentSelect(
+	pool: (Portfolio & { fit: number })[],
+	k = 3,
+): Portfolio & { fit: number } {
+	const candidates = Array.from(
+		{ length: k },
+		() => pool[Math.floor(Math.random() * pool.length)],
+	);
+	return candidates.reduce((best, c) => (c.fit > best.fit ? c : best));
 }
 
 export async function* runGeneticAlgorithm(
@@ -166,15 +177,16 @@ export async function* runGeneticAlgorithm(
 		const newPopulation: Portfolio[] = elite.map((e) => ({ ...e }));
 
 		while (newPopulation.length < populationSize) {
-			const parentA = elite[Math.floor(Math.random() * elite.length)];
-			const parentB = elite[Math.floor(Math.random() * elite.length)];
+			const parentA = tournamentSelect(evaluated);
+			const parentB = tournamentSelect(evaluated);
 
 			let childWeights =
 				Math.random() < crossoverRate / 100
 					? crossover(parentA.weights, parentB.weights)
 					: [...parentA.weights];
 
-			childWeights = mutate(childWeights, mutationRate);
+			const amplitude = 0.3 * (1 - gen / generations);
+			childWeights = mutate(childWeights, mutationRate, amplitude);
 			newPopulation.push(evaluatePortfolio(childWeights, volatilityMode));
 		}
 
