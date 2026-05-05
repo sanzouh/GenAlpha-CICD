@@ -13,7 +13,7 @@ export default function ResultsBanner({
 	return (
 		<div className="card flex items-center justify-between bg-linear-to-r from-green-950/20 to-emerald-950/20 border border-green-500/30">
 			<p className="font-mono text-[12px] text-green-400">
-				<span className="text-green-500">✓</span> {paretoSize} solutions found
+				<span className="text-green-500">✓</span> 3 profile champions selected from {paretoSize} Pareto candidates
 			</p>
 			<Button
 				onClick={onViewResults}
@@ -25,3 +25,4 @@ export default function ResultsBanner({
 		</div>
 	);
 }
+
