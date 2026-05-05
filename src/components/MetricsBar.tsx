@@ -74,7 +74,6 @@ export default function MetricsBar({
 	generation,
 	maxGenerations,
 	populationSize,
-	paretoSize,
 }: MetricsBarProps) {
 	// Tant que l'algo n'a pas tourné, on affiche "—"
 	const fmt = (v: number | null, decimals: number, suffix = "") =>
@@ -108,8 +107,8 @@ export default function MetricsBar({
 				<GenerationRing current={generation} max={maxGenerations} />
 			</MetricCard>
 			<MetricCard
-				label="Population / Pareto"
-				value={`${populationSize} / ${paretoSize}`}
+				label="Population"
+				value={`${populationSize}`}
 				valueClass="text-purple-400"
 			/>
 		</div>
