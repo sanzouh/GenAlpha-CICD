@@ -102,14 +102,17 @@ export default function ParetoTable({
 						</span>
 
 						<div className="flex flex-wrap gap-1">
-							{assets.map((asset, j) => (
-								<AllocationPill
-									key={asset.ticker}
-									ticker={asset.ticker}
-									weight={p.weights[j]}
-									color={asset.color}
-								/>
-							))}
+							{assets
+								.map((asset, j) => ({ asset, weight: p.weights[j] }))
+								.filter(({ weight }) => weight >= 0.03)
+								.map(({ asset, weight }) => (
+									<AllocationPill
+										key={asset.ticker}
+										ticker={asset.ticker}
+										weight={weight}
+										color={asset.color}
+									/>
+								))}
 						</div>
 
 						<div className="flex justify-end">

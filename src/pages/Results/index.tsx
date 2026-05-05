@@ -43,7 +43,7 @@ export default function Results() {
 				onBack={() => navigate("/")}
 			/>
 
-			<div className="px-8 py-6 flex flex-col gap-5">
+			<div className="px-8 py-6 flex flex-col gap-5 max-w-6xl mx-auto w-full">
 				<RiskToleranceTabs
 					active={profile}
 					onChange={(p) => setProfile(p)}

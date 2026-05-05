@@ -18,7 +18,8 @@ function ParamPill({ label, value }: { label: string; value: string }) {
 
 export default function ResultsHeader({ best, paretoCount, params, onBack }: ResultsHeaderProps) {
 	return (
-		<div className="border-b border-gray-200/30 px-8 py-4 flex items-start justify-between">
+		<div className="border-b border-gray-200/30 px-8 py-4">
+		<div className="max-w-6xl mx-auto flex items-start justify-between">
 			{/* Left — back + scores */}
 			<div className="flex flex-col gap-3">
 				<button
@@ -55,6 +56,7 @@ export default function ResultsHeader({ best, paretoCount, params, onBack }: Res
 				<ParamPill label="Crossover" value={`${params.crossoverRate}%`} />
 				<ParamPill label="Mutation" value={`${params.mutationRate}%`} />
 			</div>
+		</div>
 		</div>
 	);
 }
