@@ -274,15 +274,14 @@ export async function* runGeneticAlgorithm(
 		evaluatePortfolio(randomPortfolio(assets.length), volatilityMode, assets, correlMatrix),
 	);
 
+	// Tri initial — réutilisé comme cache pour la sélection parentale
+	let ranked = nonDominatedSort(population, maxRisk);
 	let bestEver: Portfolio | null = null;
 
 	for (let gen = 0; gen < generations; gen++) {
-		await new Promise((r) => setTimeout(r, 16));
+		await new Promise((r) => setTimeout(r, 0)); // cède la main sans délai artificiel
 
-		// Rang + crowding sur la population courante
-		const ranked = nonDominatedSort(population, maxRisk);
-
-		// Génération des enfants (même taille que la population)
+		// Génération des enfants avec les rangs mis en cache (pas de re-tri)
 		const offspring: Portfolio[] = [];
 		const amplitude = 0.3 * (1 - gen / generations);
 
@@ -299,13 +298,14 @@ export async function* runGeneticAlgorithm(
 			offspring.push(evaluatePortfolio(childWeights, volatilityMode, assets, correlMatrix));
 		}
 
-		// Sélection NSGA-II : trier parents + enfants par (rank asc, crowding desc)
+		// Un seul tri par génération sur la pool combinée
 		const combined = nonDominatedSort([...population, ...offspring], maxRisk);
 		combined.sort((a, b) =>
 			a.rank !== b.rank ? a.rank - b.rank : b.crowding - a.crowding,
 		);
 
 		population = combined.slice(0, populationSize);
+		ranked = population as RankedPortfolio[]; // cache pour la prochaine génération
 
 		const fullFront = population.filter((p) => (p as RankedPortfolio).rank === 0);
 		const currentBest = [...fullFront].sort((a, b) => b.sharpe - a.sharpe)[0];

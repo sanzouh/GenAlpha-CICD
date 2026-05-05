@@ -31,8 +31,8 @@ const INITIAL_STATE: GAState = {
 };
 
 const DEFAULT_PARAMS: GAParams = {
-	populationSize: 120,
-	generations: 100,
+	populationSize: 80,
+	generations: 80,
 	crossoverRate: 75,
 	mutationRate: 3,
 	maxRisk: 20,
