@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import confetti from "canvas-confetti";
 import { CheckCircle, X } from "lucide-react";
 import type { Portfolio, Asset } from "@/lib/geneticAlgorithm";
@@ -11,6 +11,8 @@ interface ConfirmModalProps {
 }
 
 export default function ConfirmModal({ portfolio, assets, profile, onClose }: ConfirmModalProps) {
+	const [copied, setCopied] = useState(false);
+
 	useEffect(() => {
 		confetti({
 			particleCount: 120,
@@ -28,6 +30,32 @@ export default function ConfirmModal({ portfolio, assets, profile, onClose }: Co
 		.slice(0, 5);
 
 	const vsMarket = portfolio.expectedReturn - 8.0;
+
+	const handleCopy = async () => {
+		const allocations = assets
+			.map((a, i) => ({ ticker: a.ticker, weight: portfolio.weights[i] }))
+			.filter((x) => x.weight >= 0.01)
+			.sort((a, b) => b.weight - a.weight)
+			.map((x) => `${x.ticker}: ${(x.weight * 100).toFixed(1)}%`)
+			.join(", ");
+
+		const payload = [
+			`Profile: ${profile}`,
+			`Return: ${portfolio.expectedReturn.toFixed(1)}%`,
+			`Risk: ${portfolio.volatility.toFixed(1)}%`,
+			`Sharpe: ${portfolio.sharpe.toFixed(2)}`,
+			`vs S&P 500: ${vsMarket >= 0 ? "+" : ""}${vsMarket.toFixed(1)}%`,
+			`Allocations: ${allocations}`,
+		].join("\n");
+
+		try {
+			await navigator.clipboard.writeText(payload);
+			setCopied(true);
+			setTimeout(() => setCopied(false), 1500);
+		} catch {
+			setCopied(false);
+		}
+	};
 
 	return (
 		<div
@@ -102,10 +130,10 @@ export default function ConfirmModal({ portfolio, assets, profile, onClose }: Co
 				</div>
 
 				<button
-					onClick={onClose}
+					onClick={handleCopy}
 					className="w-full py-2.5 rounded-lg bg-green-500 hover:bg-green-700 text-white font-semibold text-[13px] transition-colors duration-150"
 				>
-					Done
+					{copied ? "Copied!" : "Copy to clipboard"}
 				</button>
 			</div>
 		</div>
