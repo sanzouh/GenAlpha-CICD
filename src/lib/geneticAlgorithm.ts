@@ -10,6 +10,7 @@ export interface Asset {
 	expectedReturn: number;
 	volatility: number;
 	color: string;
+	marketCorr: number; // corrélation avec le marché [-1, 1] — utilisée pour les actifs custom
 }
 
 export interface Portfolio {
@@ -42,6 +43,22 @@ export interface GAResult {
 const RISK_FREE_RATE = 2;
 
 // ─────────────────────────────────────────────
+//  MATRICE DE CORRÉLATION DYNAMIQUE
+// ─────────────────────────────────────────────
+export function buildCorrelationMatrix(assets: Asset[]): number[][] {
+	return assets.map((a, i) =>
+		assets.map((b, j) => {
+			if (i === j) return 1;
+			const bi = ASSETS.findIndex((x) => x.ticker === a.ticker);
+			const bj = ASSETS.findIndex((x) => x.ticker === b.ticker);
+			if (bi >= 0 && bj >= 0) return CORRELATION[bi][bj];
+			// Actif custom : approximation par produit des corrélations marché
+			return a.marketCorr * b.marketCorr;
+		}),
+	);
+}
+
+// ─────────────────────────────────────────────
 //  UTILITAIRES
 // ─────────────────────────────────────────────
 function normalize(weights: number[]): number[] {
@@ -62,37 +79,39 @@ function enforceMaxWeight(weights: number[], maxW = 0.40): number[] {
 	return w;
 }
 
-export function randomPortfolio(): number[] {
-	const weights = ASSETS.map(() => Math.random());
+export function randomPortfolio(n: number): number[] {
+	const weights = Array.from({ length: n }, () => Math.random());
 	return normalize(weights);
 }
 
 export function evaluatePortfolio(
 	rawWeights: number[],
 	mode: "markowitz" | "linear" = "markowitz",
+	assets: Asset[] = ASSETS,
+	correlMatrix: number[][] = CORRELATION,
 ): Portfolio {
 	const weights = enforceMaxWeight(rawWeights);
 	let expectedReturn = 0;
 	let volatility = 0;
 
-	ASSETS.forEach((asset, i) => {
+	assets.forEach((asset, i) => {
 		expectedReturn += weights[i] * asset.expectedReturn;
 	});
 
 	if (mode === "linear") {
-		ASSETS.forEach((asset, i) => {
+		assets.forEach((asset, i) => {
 			volatility += weights[i] * asset.volatility;
 		});
 	} else {
 		let varianceSum = 0;
-		ASSETS.forEach((_, i) => {
-			ASSETS.forEach((_, j) => {
+		assets.forEach((a, i) => {
+			assets.forEach((b, j) => {
 				varianceSum +=
 					weights[i] *
 					weights[j] *
-					ASSETS[i].volatility *
-					ASSETS[j].volatility *
-					CORRELATION[i][j];
+					a.volatility *
+					b.volatility *
+					correlMatrix[i][j];
 			});
 		});
 		volatility = Math.sqrt(Math.max(0, varianceSum));
@@ -238,6 +257,7 @@ function nsgaTournamentSelect(pool: RankedPortfolio[], k = 2): RankedPortfolio {
 
 export async function* runGeneticAlgorithm(
 	params: GAParams,
+	assets: Asset[] = ASSETS,
 ): AsyncGenerator<GAResult, void, unknown> {
 	const {
 		populationSize,
@@ -248,8 +268,10 @@ export async function* runGeneticAlgorithm(
 		volatilityMode,
 	} = params;
 
+	const correlMatrix = buildCorrelationMatrix(assets);
+
 	let population: Portfolio[] = Array.from({ length: populationSize }, () =>
-		evaluatePortfolio(randomPortfolio(), volatilityMode),
+		evaluatePortfolio(randomPortfolio(assets.length), volatilityMode, assets, correlMatrix),
 	);
 
 	let bestEver: Portfolio | null = null;
@@ -274,7 +296,7 @@ export async function* runGeneticAlgorithm(
 					: [...parentA.weights];
 
 			childWeights = mutate(childWeights, mutationRate, amplitude);
-			offspring.push(evaluatePortfolio(childWeights, volatilityMode));
+			offspring.push(evaluatePortfolio(childWeights, volatilityMode, assets, correlMatrix));
 		}
 
 		// Sélection NSGA-II : trier parents + enfants par (rank asc, crowding desc)

@@ -8,6 +8,7 @@ export const ASSETS: Asset[] = [
 		expectedReturn: 3.5,
 		volatility: 8.0,
 		color: "bg-tbond",
+		marketCorr: -0.20,
 	},
 	{
 		ticker: "TIP",
@@ -15,6 +16,7 @@ export const ASSETS: Asset[] = [
 		expectedReturn: 3.2,
 		volatility: 6.5,
 		color: "bg-tip",
+		marketCorr: -0.15,
 	},
 	{
 		ticker: "GOLD",
@@ -22,6 +24,7 @@ export const ASSETS: Asset[] = [
 		expectedReturn: 7.5,
 		volatility: 13.5,
 		color: "bg-gold",
+		marketCorr: 0.05,
 	},
 	// ── Diversifiés ────────────────────────────────────────────
 	{
@@ -30,6 +33,7 @@ export const ASSETS: Asset[] = [
 		expectedReturn: 8.5,
 		volatility: 17.0,
 		color: "bg-reit",
+		marketCorr: 0.62,
 	},
 	{
 		ticker: "SPY",
@@ -37,6 +41,7 @@ export const ASSETS: Asset[] = [
 		expectedReturn: 10.5,
 		volatility: 17.5,
 		color: "bg-spy",
+		marketCorr: 1.00,
 	},
 	{
 		ticker: "EEM",
@@ -44,6 +49,7 @@ export const ASSETS: Asset[] = [
 		expectedReturn: 8.0,
 		volatility: 21.5,
 		color: "bg-eem",
+		marketCorr: 0.68,
 	},
 	// ── Tech large-cap ─────────────────────────────────────────
 	{
@@ -52,6 +58,7 @@ export const ASSETS: Asset[] = [
 		expectedReturn: 14.5,
 		volatility: 23.0,
 		color: "bg-msft",
+		marketCorr: 0.82,
 	},
 	{
 		ticker: "AAPL",
@@ -59,6 +66,7 @@ export const ASSETS: Asset[] = [
 		expectedReturn: 13.0,
 		volatility: 21.0,
 		color: "bg-aapl",
+		marketCorr: 0.80,
 	},
 	{
 		ticker: "XLE",
@@ -66,6 +74,7 @@ export const ASSETS: Asset[] = [
 		expectedReturn: 10.0,
 		volatility: 26.0,
 		color: "bg-xle",
+		marketCorr: 0.58,
 	},
 	// ── Haute volatilité ───────────────────────────────────────
 	{
@@ -74,6 +83,7 @@ export const ASSETS: Asset[] = [
 		expectedReturn: 28.0,
 		volatility: 45.0,
 		color: "bg-nvda",
+		marketCorr: 0.68,
 	},
 	{
 		ticker: "TSLA",
@@ -81,6 +91,7 @@ export const ASSETS: Asset[] = [
 		expectedReturn: 24.0,
 		volatility: 58.0,
 		color: "bg-tsla",
+		marketCorr: 0.48,
 	},
 	{
 		ticker: "BTC",
@@ -88,6 +99,7 @@ export const ASSETS: Asset[] = [
 		expectedReturn: 40.0,
 		volatility: 78.0,
 		color: "bg-btc",
+		marketCorr: 0.22,
 	},
 ];
 

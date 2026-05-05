@@ -9,6 +9,7 @@ type FormData = {
 	name: string;
 	expectedReturn: string;
 	volatility: number;
+	marketCorr: number;
 };
 
 interface AssetFormModalProps {
@@ -23,6 +24,7 @@ const EMPTY: FormData = {
 	name: "",
 	expectedReturn: "0",
 	volatility: 0,
+	marketCorr: 0.3,
 };
 
 function Field({
@@ -63,6 +65,7 @@ export default function AssetFormModal({
 					name: initial.name,
 					expectedReturn: initial.expectedReturn.toString(),
 					volatility: initial.volatility,
+					marketCorr: initial.marketCorr,
 				}
 			: EMPTY,
 	);
@@ -103,6 +106,7 @@ export default function AssetFormModal({
 			name: form.name,
 			expectedReturn: parseFloat(form.expectedReturn),
 			volatility: form.volatility,
+			marketCorr: form.marketCorr,
 		});
 		onClose();
 	}, [form, onClose, onSave]);
@@ -190,6 +194,20 @@ export default function AssetFormModal({
 							/>
 						</Field>
 					</div>
+
+					<Field label="Market Correlation [-1 to 1]">
+						<input
+							type="number"
+							step="0.05"
+							min="-1"
+							max="1"
+							className={inputClass}
+							value={form.marketCorr}
+							onChange={(e) =>
+								set("marketCorr", Math.max(-1, Math.min(1, parseFloat(e.target.value) || 0)))
+							}
+						/>
+					</Field>
 				</div>
 
 				{/* Footer */}

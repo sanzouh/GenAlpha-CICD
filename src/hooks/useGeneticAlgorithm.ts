@@ -5,6 +5,7 @@ import type {
 	Portfolio,
 	GAResult,
 } from "../lib/geneticAlgorithm";
+import { useAssets } from "./useAssets";
 
 // ── Types ──
 interface GAState {
@@ -40,6 +41,7 @@ const DEFAULT_PARAMS: GAParams = {
 
 // ── Hook ──
 export function useGeneticAlgorithm() {
+	const { assets } = useAssets();
 	const [params, setParams] = useState<GAParams>(DEFAULT_PARAMS);
 	const [state, setState] = useState<GAState>({ ...INITIAL_STATE, paused: false });
 
@@ -120,9 +122,9 @@ export function useGeneticAlgorithm() {
 		abortRef.current = false;
 		pauseRef.current = false;
 		setState({ ...INITIAL_STATE, running: true, paused: false });
-		generatorRef.current = runGeneticAlgorithm(params);
+		generatorRef.current = runGeneticAlgorithm(params, assets);
 		tick();
-	}, [params, state.running, state.paused, tick]);
+	}, [params, assets, state.running, state.paused, tick]);
 
 	const pause = useCallback(() => {
 		if (!state.running) return;
